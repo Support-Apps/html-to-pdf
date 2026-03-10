@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ממיר HTML ל-PDF | בס"ד</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --pink: #F8A4B8;
+            --pink-light: #FDD5DE;
+            --mint: #A8E6CF;
+            --mint-light: #D4F5E6;
+            --gold: #D4A843;
+            --gold-light: #F5E6B8;
+            --cream: #FFF9F0;
+            --dark: #2D2D2D;
+            --gray: #666;
+        }
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            background: var(--cream);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+
+        /* בס"ד */
+        .bsd {
+            position: fixed;
+            top: 12px;
+            right: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gold);
+            z-index: 100;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .header h1 span.html-tag { color: var(--pink); }
+        .header h1 span.arrow { color: var(--gold); margin: 0 6px; }
+        .header h1 span.pdf-tag { color: var(--mint); }
+
+        .header p {
+            color: var(--gray);
+            font-size: 1.05rem;
+            font-weight: 300;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 3px dashed var(--pink);
+            border-radius: 20px;
+            padding: 50px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: var(--gold);
+            background: var(--gold-light);
+            transform: scale(1.01);
+        }
+
+        .drop-zone-icon {
+            font-size: 3.5rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .drop-zone h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .drop-zone p {
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+
+        .drop-zone input[type="file"] {
+            display: none;
+        }
+
+        /* File Info */
+        .file-info {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-top: 20px;
+            border: 2px solid var(--mint);
+            animation: slideIn 0.3s ease;
+        }
+
+        .file-info.visible { display: block; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .file-info-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-size {
+            color: var(--gray);
+            font-size: 0.85rem;
+        }
+
+        .remove-file {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: var(--gray);
+            padding: 4px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .remove-file:hover {
+            background: var(--pink-light);
+            color: var(--dark);
+        }
+
+        /* Settings */
+        .settings {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 16px;
+            border: 2px solid var(--pink-light);
+        }
+
+        .settings.visible { display: block; animation: slideIn 0.3s ease; }
+
+        .settings h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .setting-group label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray);
+        }
+
+        .setting-group select,
+        .setting-group input[type="number"] {
+            padding: 10px 14px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.95rem;
+            background: var(--cream);
+            transition: border-color 0.2s;
+            appearance: auto;
+        }
+
+        .setting-group select:focus,
+        .setting-group input:focus {
+            outline: none;
+            border-color: var(--pink);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--pink);
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        /* Convert Button */
+        .convert-btn {
+            display: none;
+            width: 100%;
+            margin-top: 20px;
+            padding: 16px;
+            font-family: 'Heebo', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            background: var(--pink);
+            color: white;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+
+        .convert-btn.visible { display: block; animation: slideIn 0.3s ease; }
+
+        .convert-btn:hover {
+            background: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(212, 168, 67, 0.3);
+        }
+
+        .convert-btn:active { transform: translateY(0); }
+
+        .convert-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Progress */
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .progress-container.visible { display: block; }
+
+        .progress-bar-outer {
+            background: #eee;
+            border-radius: 20px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar-inner {
+            height: 100%;
+            background: linear-gradient(90deg, var(--pink), var(--gold), var(--mint));
+            background-size: 200% 100%;
+            border-radius: 20px;
+            width: 0%;
+            transition: width 0.5s ease;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .progress-text {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        /* Result */
+        .result {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            margin-top: 20px;
+            border: 2px solid var(--mint);
+            text-align: center;
+        }
+
+        .result.visible { display: block; animation: slideIn 0.4s ease; }
+
+        .result-icon { font-size: 3rem; margin-bottom: 12px; }
+
+        .result h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+
+        .result p {
+            color: var(--gray);
+            margin-bottom: 16px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 14px 36px;
+            background: var(--mint);
+            color: var(--dark);
+            font-family: 'Heebo', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+            background: var(--gold);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .preview-frame {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            margin-top: 16px;
+            background: white;
+        }
+
+        /* Note */
+        .note {
+            margin-top: 30px;
+            padding: 16px 20px;
+            background: var(--gold-light);
+            border-radius: 12px;
+            font-size: 0.88rem;
+            color: var(--gray);
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .note strong { color: var(--dark); }
+
+        /* Error */
+        .error-msg {
+            display: none;
+            background: #FFE5E5;
+            border: 2px solid #FF8888;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-top: 16px;
+            color: #CC3333;
+            text-align: center;
+        }
+
+        .error-msg.visible { display: block; }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.6rem; }
+            .settings-grid { grid-template-columns: 1fr; }
+            .drop-zone { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bsd">בס"ד</div>
+
+<div class="container">
+    <div class="header">
+        <h1>
+            <span class="html-tag">&lt;HTML&gt;</span>
+            <span class="arrow">➜</span>
+            <span class="pdf-tag">PDF</span>
+        </h1>
+        <p>המרה מדויקת של קובצי HTML ל-PDF — בדיוק כמו שהם נראים</p>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="dropZone" onclick="fileInput.click()">
+        <span class="drop-zone-icon">📄</span>
+        <h3>גרור קובץ HTML לכאן</h3>
+        <p>או לחץ לבחירת קובץ</p>
+        <input type="file" id="fileInput" accept=".html,.htm">
+    </div>
+
+    <!-- File Info -->
+    <div class="file-info" id="fileInfo">
+        <div class="file-info-header">
+            <div>
+                <div class="file-name">
+                    <span>📎</span>
+                    <span id="fileName">—</span>
+                </div>
+                <div class="file-size" id="fileSize">—</div>
+            </div>
+            <button class="remove-file" onclick="removeFile()" title="הסר קובץ">✕</button>
+        </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="settings" id="settings">
+        <h3>⚙️ הגדרות המרה</h3>
+        <div class="settings-grid">
+            <div class="setting-group">
+                <label>גודל דף</label>
+                <select id="pageSize">
+                    <option value="A4" selected>A4</option>
+                    <option value="A3">A3</option>
+                    <option value="A5">A5</option>
+                    <option value="Letter">Letter</option>
+                    <option value="Legal">Legal</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>שוליים (מ"מ)</label>
+                <input type="number" id="margins" value="10" min="0" max="50">
+            </div>
+        </div>
+        <div style="margin-top: 14px;">
+            <div class="checkbox-group">
+                <input type="checkbox" id="landscape">
+                <label for="landscape">כיוון לרוחב (Landscape)</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="printBg" checked>
+                <label for="printBg">כלול רקעים וצבעים</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="noMargins">
+                <label for="noMargins">ללא שוליים (Full Bleed)</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Convert Button -->
+    <button class="convert-btn" id="convertBtn" onclick="convertToPdf()">
+        ✨ המר ל-PDF
+    </button>
+
+    <!-- Progress -->
+    <div class="progress-container" id="progress">
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">מתחיל המרה...</div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-msg" id="errorMsg"></div>
+
+    <!-- Result -->
+    <div class="result" id="result">
+        <div class="result-icon">🎉</div>
+        <h3>ההמרה הושלמה בהצלחה!</h3>
+        <p id="resultInfo">—</p>
+        <a class="download-btn" id="downloadBtn" download>⬇️ הורד PDF</a>
+        <iframe class="preview-frame" id="previewFrame"></iframe>
+    </div>
+
+    <div class="note">
+        <strong>💡 טיפ:</strong> הכלי משתמש ב-Chromium לרנדור — מה שנראה בדפדפן, נראה ב-PDF.
+        <br>לתוצאות מיטביות, ודא שכל הפונטים והתמונות נטענים מקישורים תקינים או מוטמעים בקובץ.
+    </div>
+</div>
+
+<script>
+    // Elements
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const settings = document.getElementById('settings');
+    const convertBtn = document.getElementById('convertBtn');
+    const progress = document.getElementById('progress');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const errorMsg = document.getElementById('errorMsg');
+    const result = document.getElementById('result');
+    const resultInfo = document.getElementById('resultInfo');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const previewFrame = document.getElementById('previewFrame');
+
+    let selectedFile = null;
+
+    // Reset
+    function removeFile() {
+        if (confirm('להסיר את הקובץ?')) {
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.classList.remove('visible');
+            settings.classList.remove('visible');
+            convertBtn.classList.remove('visible');
+            result.classList.remove('visible');
+            errorMsg.classList.remove('visible');
+            dropZone.style.display = '';
+        }
+    }
+
+    // Drag & Drop
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) handleFile(files[0]);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) handleFile(e.target.files[0]);
+    });
+
+    function handleFile(file) {
+        if (!file.name.match(/\.(html|htm)$/i)) {
+            showError('יש לבחור קובץ HTML בלבד (.html או .htm)');
+            return;
+        }
+
+        selectedFile = file;
+        fileName.textContent = file.name;
+        fileSize.textContent = formatSize(file.size);
+
+        dropZone.style.display = 'none';
+        fileInfo.classList.add('visible');
+        settings.classList.add('visible');
+        convertBtn.classList.add('visible');
+        result.classList.remove('visible');
+        errorMsg.classList.remove('visible');
+    }
+
+    function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function showError(msg) {
+        errorMsg.textContent = '❌ ' + msg;
+        errorMsg.classList.add('visible');
+    }
+
+    // Conversion — opens a new window with the HTML + auto-print script embedded inside
+    async function convertToPdf() {
+        if (!selectedFile) return;
+
+        errorMsg.classList.remove('visible');
+        result.classList.remove('visible');
+        convertBtn.disabled = true;
+        progress.classList.add('visible');
+
+        try {
+            // Step 1: Read file
+            updateProgress(10, 'קורא את הקובץ...');
+            const htmlContent = await readFile(selectedFile);
+
+            // Step 2: Gather settings
+            updateProgress(30, 'מעבד את ה-HTML...');
+            await delay(200);
+
+            const pageSize = document.getElementById('pageSize').value;
+            const margins = document.getElementById('margins').value;
+            const landscape = document.getElementById('landscape').checked;
+            const printBg = document.getElementById('printBg').checked;
+            const noMargins = document.getElementById('noMargins').checked;
+            const marginVal = noMargins ? '0mm' : margins + 'mm';
+
+            // Step 3: Build print-ready HTML
+            updateProgress(50, 'מכין גרסה להדפסה...');
+
+            const printCss = `
+                @media print {
+                    @page {
+                        size: ${pageSize} ${landscape ? 'landscape' : 'portrait'};
+                        margin: ${marginVal};
+                    }
+                    body {
+                        ${printBg ? '-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;' : ''}
+                    }
+                }
+            `;
+
+            // Script that auto-triggers print once the page loads
+            const autoPrintScript = `
+                <script>
+                    window.addEventListener('load', function() {
+                        setTimeout(function() { window.print(); }, 800);
+                    });
+                <\/script>
+            `;
+
+            // Inject print CSS + auto-print script into the HTML
+            let modifiedHtml = htmlContent;
+
+            // Inject CSS
+            if (modifiedHtml.includes('</head>')) {
+                modifiedHtml = modifiedHtml.replace('</head>', '<style>' + printCss + '</style></head>');
+            } else if (modifiedHtml.includes('<head>')) {
+                modifiedHtml = modifiedHtml.replace('<head>', '<head><style>' + printCss + '</style>');
+            } else {
+                modifiedHtml = '<style>' + printCss + '</style>' + modifiedHtml;
+            }
+
+            // Inject auto-print script before </body> or at the end
+            if (modifiedHtml.includes('</body>')) {
+                modifiedHtml = modifiedHtml.replace('</body>', autoPrintScript + '</body>');
+            } else {
+                modifiedHtml = modifiedHtml + autoPrintScript;
+            }
+
+            updateProgress(70, 'פותח חלון הדפסה...');
+            await delay(300);
+
+            // Create a Blob URL and open in a new window (avoids cross-origin issues)
+            const modifiedBlob = new Blob([modifiedHtml], { type: 'text/html;charset=utf-8' });
+            const modifiedBlobUrl = URL.createObjectURL(modifiedBlob);
+
+            const printWindow = window.open(modifiedBlobUrl, '_blank');
+
+            if (!printWindow) {
+                // Popup blocked — fallback: download the file for the user to open manually
+                showError('החלון נחסם ע"י הדפדפן. לוחץ על "הורד HTML" ופותח אותו בדפדפן → Ctrl+P לשמירה כ-PDF.');
+                downloadBtn.href = modifiedBlobUrl;
+                downloadBtn.download = selectedFile.name.replace(/\.(html|htm)$/i, '_print.html');
+                downloadBtn.textContent = '⬇️ הורד HTML מותאם להדפסה';
+                progress.classList.remove('visible');
+                result.classList.add('visible');
+                resultInfo.textContent = 'פתח את הקובץ בדפדפן ולחץ Ctrl+P (או ⌘+P) כדי לשמור כ-PDF';
+                previewFrame.style.display = 'none';
+                convertBtn.disabled = false;
+                return;
+            }
+
+            updateProgress(100, 'חלון הדפסה נפתח — בחר "שמור כ-PDF"!');
+            await delay(1000);
+
+            // Show success UI
+            progress.classList.remove('visible');
+            result.classList.add('visible');
+            resultInfo.textContent = `בחלון שנפתח → בחר "שמור כ-PDF" (Save as PDF) | גודל דף: ${pageSize} | כיוון: ${landscape ? 'לרוחב' : 'לאורך'}`;
+
+            // Also provide download of the print-ready HTML
+            downloadBtn.href = modifiedBlobUrl;
+            downloadBtn.download = selectedFile.name.replace(/\.(html|htm)$/i, '_print.html');
+            downloadBtn.textContent = '⬇️ הורד HTML מותאם להדפסה';
+
+            // Show preview
+            previewFrame.style.display = '';
+            previewFrame.srcdoc = htmlContent;
+
+            convertBtn.disabled = false;
+
+        } catch (err) {
+            progress.classList.remove('visible');
+            showError('שגיאה בהמרה: ' + err.message);
+            convertBtn.disabled = false;
+        }
+    }
+
+    function readFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('שגיאה בקריאת הקובץ'));
+            reader.readAsText(file, 'utf-8');
+        });
+    }
+
+    function updateProgress(percent, text) {
+        progressBar.style.width = percent + '%';
+        progressText.textContent = text;
+    }
+
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+</script>
+
+</body>
+</html>

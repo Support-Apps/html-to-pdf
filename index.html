@@ -461,6 +461,10 @@
         </div>
         <div style="margin-top: 14px;">
             <div class="checkbox-group">
+                <input type="checkbox" id="fitToPage" checked>
+                <label for="fitToPage">התאם אוטומטית לרוחב הדף (מומלץ!)</label>
+            </div>
+            <div class="checkbox-group">
                 <input type="checkbox" id="landscape">
                 <label for="landscape">כיוון לרוחב (Landscape)</label>
             </div>
@@ -471,6 +475,12 @@
             <div class="checkbox-group">
                 <input type="checkbox" id="noMargins">
                 <label for="noMargins">ללא שוליים (Full Bleed)</label>
+            </div>
+        </div>
+        <div class="settings-grid" style="margin-top: 12px;">
+            <div class="setting-group">
+                <label>כיווץ ידני (%) — 100 = ללא שינוי</label>
+                <input type="number" id="scalePercent" value="100" min="30" max="200" step="5">
             </div>
         </div>
     </div>
@@ -501,8 +511,9 @@
     </div>
 
     <div class="note">
-        <strong>💡 טיפ:</strong> הכלי משתמש ב-Chromium לרנדור — מה שנראה בדפדפן, נראה ב-PDF.
-        <br>לתוצאות מיטביות, ודא שכל הפונטים והתמונות נטענים מקישורים תקינים או מוטמעים בקובץ.
+        <strong>💡 טיפ:</strong> אם התוכן חתוך או נוטה לצד — סמנו ✅ "התאם אוטומטית לרוחב הדף"
+        או הקטינו את אחוז הכיווץ (למשל 80%).
+        <br>בחלון ההדפסה, בחרו <strong>"שמירה כקובץ PDF"</strong> כיעד ולחצו שמירה.
     </div>
 </div>
 
@@ -613,7 +624,10 @@
             const landscape = document.getElementById('landscape').checked;
             const printBg = document.getElementById('printBg').checked;
             const noMargins = document.getElementById('noMargins').checked;
+            const fitToPage = document.getElementById('fitToPage').checked;
+            const scalePercent = parseInt(document.getElementById('scalePercent').value) || 100;
             const marginVal = noMargins ? '0mm' : margins + 'mm';
+            const scaleFactor = scalePercent / 100;
 
             // Step 3: Build print-ready HTML
             updateProgress(50, 'מכין גרסה להדפסה...');
@@ -624,16 +638,59 @@
                         size: ${pageSize} ${landscape ? 'landscape' : 'portrait'};
                         margin: ${marginVal};
                     }
-                    body {
+                    html {
                         ${printBg ? '-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;' : ''}
                     }
                 }
+                /* Fit-to-page: scale the entire content to fit the page width */
+                ${fitToPage ? `
+                html, body {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    overflow-x: hidden !important;
+                }
+                body {
+                    transform-origin: top right !important;
+                    transform: scale(${scaleFactor}) !important;
+                    width: ${Math.round(100 / scaleFactor)}% !important;
+                }
+                body * {
+                    max-width: 100% !important;
+                    box-sizing: border-box !important;
+                }
+                img, svg, video, canvas, table {
+                    max-width: 100% !important;
+                    height: auto !important;
+                }
+                ` : (scalePercent !== 100 ? `
+                body {
+                    transform-origin: top right !important;
+                    transform: scale(${scaleFactor}) !important;
+                    width: ${Math.round(100 / scaleFactor)}% !important;
+                }
+                ` : '')}
             `;
 
-            // Script that auto-triggers print once the page loads
+            // Script that auto-triggers print AND measures content to auto-scale if needed
             const autoPrintScript = `
                 <script>
                     window.addEventListener('load', function() {
+                        ${fitToPage ? `
+                        // Auto-detect if content overflows and adjust scale
+                        var body = document.body;
+                        var html = document.documentElement;
+                        var pageWidth = html.clientWidth;
+                        var contentWidth = Math.max(
+                            body.scrollWidth, body.offsetWidth,
+                            html.scrollWidth, html.offsetWidth
+                        );
+                        if (contentWidth > pageWidth * 1.05) {
+                            var autoScale = (pageWidth / contentWidth) * ${scaleFactor};
+                            body.style.transform = 'scale(' + autoScale + ')';
+                            body.style.transformOrigin = 'top right';
+                            body.style.width = Math.round(100 / autoScale) + '%';
+                        }
+                        ` : ''}
                         setTimeout(function() { window.print(); }, 800);
                     });
                 <\/script>
